@@ -125,15 +125,24 @@ let audio = null;
 
 function blankGame() { return { exists: undefined, hostId: null, state: null, teams: {}, marks: {}, answers: {}, myAnswer: null }; }
 
+// Standardrunden kommen immer frisch aus questions.js, damit neue Runden und Korrekturen
+// auch dort ankommen, wo schon einmal gespielt wurde. Gespeichert bleiben nur Auswahl,
+// Timer und eigene Runden.
 function loadSetup() {
   const s = store.get('kq-setup');
-  if (s && Array.isArray(s.rounds)) return s;
+  const saved = s && Array.isArray(s.rounds) ? s.rounds : [];
+  const useByTitle = {};
+  saved.filter(r => !r.custom).forEach(r => { useByTitle[r.title] = r.use; });
   return {
-    timerSec: 60,
-    rounds: ROUNDS.map((r, i) => ({
-      id: 'r' + i, title: r.title, est: !!r.est, use: true,
-      questions: r.questions.map(q => ({ ...q, points: q.points || (r.est ? 2 : 1) })),
-    })),
+    timerSec: s && typeof s.timerSec === 'number' ? s.timerSec : 60,
+    rounds: [
+      ...ROUNDS.map(r => ({
+        id: 'd-' + r.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        title: r.title, est: !!r.est, use: useByTitle[r.title] ?? true,
+        questions: r.questions.map(q => ({ ...q, points: q.points || (r.est ? 2 : 1) })),
+      })),
+      ...saved.filter(r => r.custom),
+    ],
   };
 }
 const saveSetup = () => store.set('kq-setup', setup);
