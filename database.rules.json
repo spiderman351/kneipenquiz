@@ -1,0 +1,41 @@
+{
+  "rules": {
+    "games": {
+      "$code": {
+        "host": {
+          ".read": "auth != null",
+          ".write": "auth != null && !data.exists() && newData.val() === auth.uid"
+        },
+        "createdAt": {
+          ".read": "auth != null",
+          ".write": "auth != null && root.child('games').child($code).child('host').val() === auth.uid"
+        },
+        "state": {
+          ".read": "auth != null",
+          ".write": "auth != null && root.child('games').child($code).child('host').val() === auth.uid"
+        },
+        "marks": {
+          ".read": "auth != null",
+          ".write": "auth != null && root.child('games').child($code).child('host').val() === auth.uid"
+        },
+        "teams": {
+          ".read": "auth != null",
+          "$uid": {
+            ".write": "auth != null && (auth.uid === $uid || root.child('games').child($code).child('host').val() === auth.uid)",
+            ".validate": "!newData.exists() || (newData.child('name').isString() && newData.child('name').val().length > 0 && newData.child('name').val().length <= 40)"
+          }
+        },
+        "answers": {
+          ".read": "auth != null && root.child('games').child($code).child('host').val() === auth.uid",
+          "$q": {
+            "$uid": {
+              ".read": "auth != null && auth.uid === $uid",
+              ".write": "auth != null && auth.uid === $uid && root.child('games').child($code).child('state').child('key').val() === $q && root.child('games').child($code).child('state').child('revealed').val() !== true",
+              ".validate": "newData.child('text').isString() && newData.child('text').val().length <= 200"
+            }
+          }
+        }
+      }
+    }
+  }
+}
